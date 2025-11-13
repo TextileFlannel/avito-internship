@@ -1,7 +1,11 @@
 package service
 
 import (
+	"avito-internship/internal/models"
 	"avito-internship/internal/storage"
+	"errors"
+	"math/rand"
+	"time"
 )
 
 type Service struct {
@@ -10,4 +14,121 @@ type Service struct {
 
 func NewService(storage *storage.Storage) *Service {
 	return &Service{storage: storage}
+}
+
+func (s *Service) AddTeam(teamName string, members []models.TeamMember) error {
+	return s.storage.AddTeam(teamName, members)
+}
+
+func (s *Service) GetTeam(teamName string) ([]models.TeamMember, error) {
+	return s.storage.GetTeam(teamName)
+}
+
+func (s *Service) SetUserActive(userId string, isActive bool) error {
+	return s.storage.SetUserActive(userId, isActive)
+}
+
+func (s *Service) CreatePR(prId, prName, authorId string) (models.PullRequest, error) {
+	author, err := s.storage.GetUser(authorId)
+	if err != nil {
+		return models.PullRequest{}, err
+	}
+	teamUsers, err := s.storage.GetUsersByTeam(author.TeamName)
+	if err != nil {
+		return models.PullRequest{}, err
+	}
+	var activeReviewers []models.User
+	for _, u := range teamUsers {
+		if u.IsActive && u.UserId != authorId {
+			activeReviewers = append(activeReviewers, u)
+		}
+	}
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(activeReviewers), func(i, j int) {
+		activeReviewers[i], activeReviewers[j] = activeReviewers[j], activeReviewers[i]
+	})
+	var reviewers []string
+	for i := 0; i < len(activeReviewers) && i < 2; i++ {
+		reviewers = append(reviewers, activeReviewers[i].UserId)
+	}
+	pr := models.PullRequest{
+		PullRequestId:     prId,
+		PullRequestName:   prName,
+		AuthorId:          authorId,
+		Status:            "OPEN",
+		AssignedReviewers: reviewers,
+	}
+	err = s.storage.CreatePR(pr)
+	if err != nil {
+		return models.PullRequest{}, err
+	}
+	return pr, nil
+}
+
+func (s *Service) MergePR(prId string) (models.PullRequest, error) {
+	pr, err := s.storage.GetPR(prId)
+	if err != nil {
+		return models.PullRequest{}, err
+	}
+	if pr.Status == "MERGED" {
+		return pr, nil
+	}
+	pr.Status = "MERGED"
+	return pr, s.storage.UpdatePR(pr)
+}
+
+func (s *Service) ReassignPR(prId, oldUserId string) (models.PullRequest, string, error) {
+	pr, err := s.storage.GetPR(prId)
+	if err != nil {
+		return models.PullRequest{}, "", err
+	}
+	if pr.Status == "MERGED" {
+		return models.PullRequest{}, "", errors.New("cannot reassign on merged PR")
+	}
+	found := false
+	for i, r := range pr.AssignedReviewers {
+		if r == oldUserId {
+			pr.AssignedReviewers = append(pr.AssignedReviewers[:i], pr.AssignedReviewers[i+1:]...)
+			found = true
+			break
+		}
+	}
+	if !found {
+		return models.PullRequest{}, "", errors.New("reviewer is not assigned to this PR")
+	}
+	oldUser, err := s.storage.GetUser(oldUserId)
+	if err != nil {
+		return models.PullRequest{}, "", err
+	}
+	teamUsers, err := s.storage.GetUsersByTeam(oldUser.TeamName)
+	if err != nil {
+		return models.PullRequest{}, "", err
+	}
+	var activeReviewers []models.User
+	for _, u := range teamUsers {
+		if u.IsActive && u.UserId != pr.AuthorId {
+			assigned := false
+			for _, ar := range pr.AssignedReviewers {
+				if ar == u.UserId {
+					assigned = true
+					break
+				}
+			}
+			if !assigned {
+				activeReviewers = append(activeReviewers, u)
+			}
+		}
+	}
+	if len(activeReviewers) == 0 {
+		return models.PullRequest{}, "", errors.New("no active replacement candidate in team")
+	}
+	rand.Seed(time.Now().UnixNano())
+	newReviewer := activeReviewers[rand.Intn(len(activeReviewers))]
+	pr.AssignedReviewers = append(pr.AssignedReviewers, newReviewer.UserId)
+	err = s.storage.UpdatePR(pr)
+	return pr, newReviewer.UserId, err
+}
+
+func (s *Service) GetPRsByReviewer(userId string) ([]models.PullRequestShort, error) {
+	return s.storage.GetPRsByReviewer(userId)
 }
