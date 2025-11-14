@@ -438,3 +438,29 @@ paths:
                     pull_request_name: Add search
                     author_id: u1
                     status: OPEN
+
+  /stats/assignments:
+    get:
+      tags: [Health]
+      summary: Получить статистику назначений ревьюверов по пользователям
+      responses:
+        '200':
+          description: Статистика назначений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [user_id, count]
+                  properties:
+                    user_id:
+                      type: string
+                    count:
+                      type: integer
+                      description: Количество назначений
+              example:
+                - user_id: u1
+                  count: 5
+                - user_id: u2
+                  count: 3

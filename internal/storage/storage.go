@@ -177,3 +177,27 @@ func (s *Storage) GetPRsByReviewer(userId string) ([]models.PullRequestShort, er
 	}
 	return prs, nil
 }
+
+func (s *Storage) GetAssignmentStats() ([]models.AssignmentStat, error) {
+	rows, err := s.DB.Query(`
+		SELECT elem AS user_id, COUNT(*) AS count
+		FROM pull_requests pr
+		CROSS JOIN jsonb_array_elements_text(pr.assigned_reviewers) AS elem
+		GROUP BY elem
+		ORDER BY count DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []models.AssignmentStat
+	for rows.Next() {
+		var stat models.AssignmentStat
+		if err := rows.Scan(&stat.UserId, &stat.Count); err != nil {
+			return nil, err
+		}
+		stats = append(stats, stat)
+	}
+	return stats, nil
+}

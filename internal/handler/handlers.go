@@ -209,3 +209,14 @@ func (h *Handlers) GetUsersGetReview(ctx echo.Context, params api.GetUsersGetRev
 	}
 	return ctx.JSON(http.StatusOK, resp)
 }
+
+func (h *Handlers) GetStatsAssignments(ctx echo.Context) error {
+	stats, err := h.service.GetAssignmentStats()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, api.ErrorResponse{Error: struct {
+			Code    api.ErrorResponseErrorCode `json:"code"`
+			Message string                     `json:"message"`
+		}{Code: api.NOTFOUND, Message: err.Error()}})
+	}
+	return ctx.JSON(http.StatusOK, stats)
+}

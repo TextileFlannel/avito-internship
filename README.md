@@ -69,6 +69,7 @@
 - `POST /pullRequest/merge` - Слить PR
 - `POST /pullRequest/reassign` - Переназначить ревьювера
 - `GET /users/getReview?user_id=...` - Получить PR'ы пользователя
+- `GET /stats/assignments` - Получить статистику назначений ревьюверов по пользователям
 
 ## Проверка
 
@@ -87,4 +88,25 @@ curl "http://localhost:8080/team/get?team_name=team1"
 curl -X POST http://localhost:8080/pullRequest/create \
   -H "Content-Type: application/json" \
   -d '{"pull_request_id": "pr1", "pull_request_name": "Fix bug", "author_id": "u1"}'
+
+# Слить PR
+curl -X POST http://localhost:8080/pullRequest/merge \
+  -H "Content-Type: application/json" \
+  -d '{"pull_request_id": "pr1"}'
+
+# Переназначить ревьювера
+curl -X POST http://localhost:8080/pullRequest/reassign \
+  -H "Content-Type: application/json" \
+  -d '{"pull_request_id": "pr1", "old_user_id": "u2"}'
+
+# Получить PR'ы пользователя
+curl "http://localhost:8080/users/getReview?user_id=u1"
+
+# Установить активность пользователя
+curl -X POST http://localhost:8080/users/setIsActive \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "u1", "is_active": false}'
+
+# Получить статистику назначений ревьюверов
+curl "http://localhost:8080/stats/assignments"
 ```

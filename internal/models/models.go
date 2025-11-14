@@ -31,3 +31,8 @@ type PullRequestShort struct {
 	AuthorId        string
 	Status          string
 }
+
+type AssignmentStat struct {
+	UserId string `json:"user_id"`
+	Count  int    `json:"count"`
+}

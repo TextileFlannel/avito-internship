@@ -140,3 +140,7 @@ func (s *Service) GetPRsByReviewer(userId string) ([]models.PullRequestShort, er
 	}
 	return s.storage.GetPRsByReviewer(userId)
 }
+
+func (s *Service) GetAssignmentStats() ([]models.AssignmentStat, error) {
+	return s.storage.GetAssignmentStats()
+}
