@@ -51,12 +51,14 @@ func (s *Service) CreatePR(prId, prName, authorId string) (models.PullRequest, e
 	for i := 0; i < len(activeReviewers) && i < 2; i++ {
 		reviewers = append(reviewers, activeReviewers[i].UserId)
 	}
+	now := time.Now()
 	pr := models.PullRequest{
 		PullRequestId:     prId,
 		PullRequestName:   prName,
 		AuthorId:          authorId,
 		Status:            "OPEN",
 		AssignedReviewers: reviewers,
+		CreatedAt:         &now,
 	}
 	err = s.storage.CreatePR(pr)
 	if err != nil {
@@ -74,6 +76,8 @@ func (s *Service) MergePR(prId string) (models.PullRequest, error) {
 		return pr, nil
 	}
 	pr.Status = "MERGED"
+	now := time.Now()
+	pr.MergedAt = &now
 	return pr, s.storage.UpdatePR(pr)
 }
 
@@ -130,5 +134,9 @@ func (s *Service) ReassignPR(prId, oldUserId string) (models.PullRequest, string
 }
 
 func (s *Service) GetPRsByReviewer(userId string) ([]models.PullRequestShort, error) {
+	_, err := s.storage.GetUser(userId)
+	if err != nil {
+		return nil, err
+	}
 	return s.storage.GetPRsByReviewer(userId)
 }

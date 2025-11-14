@@ -110,6 +110,8 @@ func (h *Handlers) PostPullRequestCreate(ctx echo.Context) error {
 		AuthorId:          pr.AuthorId,
 		Status:            api.PullRequestStatus(pr.Status),
 		AssignedReviewers: pr.AssignedReviewers,
+		CreatedAt:         pr.CreatedAt,
+		MergedAt:          pr.MergedAt,
 	}
 	return ctx.JSON(http.StatusOK, resp)
 }
@@ -135,6 +137,8 @@ func (h *Handlers) PostPullRequestMerge(ctx echo.Context) error {
 		AuthorId:          pr.AuthorId,
 		Status:            api.PullRequestStatus(pr.Status),
 		AssignedReviewers: pr.AssignedReviewers,
+		CreatedAt:         pr.CreatedAt,
+		MergedAt:          pr.MergedAt,
 	}
 	return ctx.JSON(http.StatusOK, resp)
 }
@@ -172,6 +176,8 @@ func (h *Handlers) PostPullRequestReassign(ctx echo.Context) error {
 			AuthorId:          pr.AuthorId,
 			Status:            api.PullRequestStatus(pr.Status),
 			AssignedReviewers: pr.AssignedReviewers,
+			CreatedAt:         pr.CreatedAt,
+			MergedAt:          pr.MergedAt,
 		},
 		ReplacedBy: newReviewer,
 	}
@@ -179,7 +185,13 @@ func (h *Handlers) PostPullRequestReassign(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetUsersGetReview(ctx echo.Context, params api.GetUsersGetReviewParams) error {
-	prs, _ := h.service.GetPRsByReviewer(params.UserId)
+	prs, err := h.service.GetPRsByReviewer(params.UserId)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, api.ErrorResponse{Error: struct {
+			Code    api.ErrorResponseErrorCode `json:"code"`
+			Message string                     `json:"message"`
+		}{Code: api.NOTFOUND, Message: err.Error()}})
+	}
 	resp := struct {
 		UserId       string                 `json:"user_id"`
 		PullRequests []api.PullRequestShort `json:"pull_requests"`

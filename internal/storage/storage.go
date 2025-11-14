@@ -88,16 +88,16 @@ func (s *Storage) CreatePR(pr models.PullRequest) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.DB.Exec("INSERT INTO pull_requests (pull_request_id, pull_request_name, author_id, status, assigned_reviewers) VALUES ($1, $2, $3, $4, $5)",
-		pr.PullRequestId, pr.PullRequestName, pr.AuthorId, pr.Status, reviewersJSON)
+	_, err = s.DB.Exec("INSERT INTO pull_requests (pull_request_id, pull_request_name, author_id, status, assigned_reviewers, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+		pr.PullRequestId, pr.PullRequestName, pr.AuthorId, pr.Status, reviewersJSON, pr.CreatedAt)
 	return err
 }
 
 func (s *Storage) GetPR(prId string) (models.PullRequest, error) {
 	var pr models.PullRequest
 	var reviewersJSON []byte
-	err := s.DB.QueryRow("SELECT pull_request_id, pull_request_name, author_id, status, assigned_reviewers FROM pull_requests WHERE pull_request_id = $1", prId).
-		Scan(&pr.PullRequestId, &pr.PullRequestName, &pr.AuthorId, &pr.Status, &reviewersJSON)
+	err := s.DB.QueryRow("SELECT pull_request_id, pull_request_name, author_id, status, assigned_reviewers, created_at, merged_at FROM pull_requests WHERE pull_request_id = $1", prId).
+		Scan(&pr.PullRequestId, &pr.PullRequestName, &pr.AuthorId, &pr.Status, &reviewersJSON, &pr.CreatedAt, &pr.MergedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return models.PullRequest{}, errors.New("PR not found")
@@ -116,8 +116,8 @@ func (s *Storage) UpdatePR(pr models.PullRequest) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.DB.Exec("UPDATE pull_requests SET pull_request_name = $1, author_id = $2, status = $3, assigned_reviewers = $4 WHERE pull_request_id = $5",
-		pr.PullRequestName, pr.AuthorId, pr.Status, reviewersJSON, pr.PullRequestId)
+	_, err = s.DB.Exec("UPDATE pull_requests SET pull_request_name = $1, author_id = $2, status = $3, assigned_reviewers = $4, merged_at = $5 WHERE pull_request_id = $6",
+		pr.PullRequestName, pr.AuthorId, pr.Status, reviewersJSON, pr.MergedAt, pr.PullRequestId)
 	return err
 }
 

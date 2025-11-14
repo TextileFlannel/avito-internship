@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type TeamMember struct {
 	UserId   string
 	Username string
@@ -19,6 +21,8 @@ type PullRequest struct {
 	AuthorId          string
 	Status            string
 	AssignedReviewers []string
+	CreatedAt         *time.Time
+	MergedAt          *time.Time
 }
 
 type PullRequestShort struct {
