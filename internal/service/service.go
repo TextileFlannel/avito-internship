@@ -25,6 +25,26 @@ func (s *Service) GetTeam(teamName string) ([]models.TeamMember, error) {
 }
 
 func (s *Service) SetUserActive(userId string, isActive bool) error {
+	user, err := s.storage.GetUser(userId)
+	if err != nil {
+		return err
+	}
+	if user.IsActive && !isActive {
+		// Переназначить все открытые PR, где он ревьювер
+		prs, err := s.storage.GetPRsByReviewer(userId)
+		if err != nil {
+			return err
+		}
+		for _, prShort := range prs {
+			if prShort.Status == "OPEN" {
+				_, _, err := s.ReassignPR(prShort.PullRequestId, userId)
+				if err != nil {
+					// Если переназначение невозможно, пропустить, но продолжить деактивацию
+					continue
+				}
+			}
+		}
+	}
 	return s.storage.SetUserActive(userId, isActive)
 }
 
@@ -143,4 +163,30 @@ func (s *Service) GetPRsByReviewer(userId string) ([]models.PullRequestShort, er
 
 func (s *Service) GetAssignmentStats() ([]models.AssignmentStat, error) {
 	return s.storage.GetAssignmentStats()
+}
+
+func (s *Service) DeactivateTeam(teamName string) error {
+	users, err := s.storage.GetUsersByTeam(teamName)
+	if err != nil {
+		return err
+	}
+	// Для каждого активного пользователя переназначить его PR
+	for _, user := range users {
+		if user.IsActive {
+			prs, err := s.storage.GetPRsByReviewer(user.UserId)
+			if err != nil {
+				continue
+			}
+			for _, prShort := range prs {
+				if prShort.Status == "OPEN" {
+					_, _, err := s.ReassignPR(prShort.PullRequestId, user.UserId)
+					if err != nil {
+						continue // Пропустить если переназначение невозможно
+					}
+				}
+			}
+		}
+	}
+	// Деактивировать всех пользователей команды
+	return s.storage.DeactivateTeam(teamName)
 }

@@ -201,3 +201,18 @@ func (s *Storage) GetAssignmentStats() ([]models.AssignmentStat, error) {
 	}
 	return stats, nil
 }
+
+func (s *Storage) DeactivateTeam(teamName string) error {
+	result, err := s.DB.Exec("UPDATE users SET is_active = false WHERE team_name = $1", teamName)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("team not found or no users to deactivate")
+	}
+	return nil
+}

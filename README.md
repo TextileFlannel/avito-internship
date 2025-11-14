@@ -10,26 +10,33 @@
 
 ```
 .
+├── api/
+│   └── generated.go
 ├── cmd/
 │   └── server/
-│       └── main.go          
+│       └── main.go
 ├── internal/
-│   ├── api/
-│   │   └── generated.go     
+│   ├── config/
+│   │   └── config.go
 │   ├── handler/
-│   │   └── handlers.go      
+│   │   └── handlers.go
 │   ├── models/
-│   │   └── models.go        
+│   │   └── models.go
 │   ├── service/
-│   │   └── service.go       
+│   │   └── service.go
 │   └── storage/
-│       └── storage.go       
-├── docker-compose.yml       
-├── Dockerfile               
-├── go.mod                   
-├── Makefile                 
-├── openapi.yml              
-└── README.md                
+│       └── storage.go
+├── migrations/
+│   ├── 20250101000000_create_tables.sql
+│   └── migrations.go
+├── .gitignore
+├── Dockerfile
+├── Makefile
+├── README.md
+├── docker-compose.yml
+├── go.mod
+├── go.sum
+└── openapi.yml
 ```
 
 ## Запуск
@@ -64,6 +71,7 @@
 
 - `POST /team/add` - Добавить команду
 - `GET /team/get?team_name=...` - Получить команду
+- `POST /team/deactivate` - Деактивировать всех пользователей команды и переназначить их открытые PR
 - `POST /users/setIsActive` - Установить активность пользователя
 - `POST /pullRequest/create` - Создать PR
 - `POST /pullRequest/merge` - Слить PR
@@ -109,4 +117,9 @@ curl -X POST http://localhost:8080/users/setIsActive \
 
 # Получить статистику назначений ревьюверов
 curl "http://localhost:8080/stats/assignments"
+
+# Деактивировать команду
+curl -X POST http://localhost:8080/team/deactivate \
+  -H "Content-Type: application/json" \
+  -d '{"team_name": "team1"}'
 ```

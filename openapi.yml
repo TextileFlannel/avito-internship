@@ -464,3 +464,43 @@ paths:
                   count: 5
                 - user_id: u2
                   count: 3
+
+  /team/deactivate:
+    post:
+      tags: [Teams]
+      summary: Деактивировать всех пользователей команды и переназначить их открытые PR
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [team_name]
+              properties:
+                team_name:
+                  type: string
+                  description: Уникальное имя команды
+            example:
+              team_name: payments
+      responses:
+        '200':
+          description: Команда деактивирована
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        '400':
+          description: Команда не найдена или ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                error:
+                  code: NOT_FOUND
+                  message: team not found or no users to deactivate

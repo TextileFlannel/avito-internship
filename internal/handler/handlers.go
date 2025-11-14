@@ -220,3 +220,23 @@ func (h *Handlers) GetStatsAssignments(ctx echo.Context) error {
 	}
 	return ctx.JSON(http.StatusOK, stats)
 }
+
+func (h *Handlers) PostTeamDeactivate(ctx echo.Context) error {
+	var req struct {
+		TeamName string `json:"team_name"`
+	}
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, api.ErrorResponse{Error: struct {
+			Code    api.ErrorResponseErrorCode `json:"code"`
+			Message string                     `json:"message"`
+		}{Code: api.NOTFOUND, Message: "invalid request"}})
+	}
+	err := h.service.DeactivateTeam(req.TeamName)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, api.ErrorResponse{Error: struct {
+			Code    api.ErrorResponseErrorCode `json:"code"`
+			Message string                     `json:"message"`
+		}{Code: api.NOTFOUND, Message: err.Error()}})
+	}
+	return ctx.JSON(http.StatusOK, map[string]string{"status": "ok"})
+}
