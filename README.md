@@ -29,6 +29,9 @@
 ├── migrations/
 │   ├── 20250101000000_create_tables.sql
 │   └── migrations.go
+├── docs/
+│   └── screenshots/
+│       └── tests.png
 ├── .gitignore
 ├── Dockerfile
 ├── Makefile
@@ -123,3 +126,7 @@ curl -X POST http://localhost:8080/team/deactivate \
   -H "Content-Type: application/json" \
   -d '{"team_name": "team1"}'
 ```
+
+ ## Нагрзачное тестирование
+
+![Результаты тестирования](docs/screenshots/tests.png)
