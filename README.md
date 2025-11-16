@@ -23,7 +23,8 @@
 │   ├── models/
 │   │   └── models.go
 │   ├── service/
-│   │   └── service.go
+│   │   ├── service.go
+│   │   └── service_test.go
 │   └── storage/
 │       └── storage.go
 ├── migrations/
@@ -69,6 +70,24 @@
    ```bash
    go run cmd/server/main.go
    ```
+
+## Тестирование
+
+### Запуск тестов
+
+Запуск тестов для service слоя:
+```bash
+make test
+```
+
+### Другие команды
+
+- `make build` - Собрать бинарный файл
+- `make fmt` - Форматировать код
+- `make vet` - Проверить код на ошибки
+- `make lint` - Запустить линтер
+- `make clean` - Очистить бинарные файлы
+- `make tidy` - Очистить модули Go
 
 ## API Endpoints
 
